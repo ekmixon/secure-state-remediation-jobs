@@ -49,8 +49,7 @@ class TestEnableDdosProtection(object):
         client = Mock()
         action = VirtualNetworkEnableDdosProtection()
         DdosProtectionPlanListResult = Mock()
-        ddos_plans_list = []
-        ddos_plans_list.append(DdosProtectionPlanListResult)
+        ddos_plans_list = [DdosProtectionPlanListResult]
         client.ddos_protection_plans.list.return_value = ddos_plans_list
         assert (
             action.remediate(

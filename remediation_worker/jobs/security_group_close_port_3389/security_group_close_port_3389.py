@@ -131,8 +131,7 @@ class SecurityGroupClosePort3389(object):
         params, region = self.parse(args[1])
         client = boto3.client("ec2", region_name=region)
         logging.info("acquired ec2 client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":

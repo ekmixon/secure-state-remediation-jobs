@@ -66,8 +66,7 @@ class S3ListBuckets:
         client = boto3.client("s3")
         params = self.parse(args[1])
         logging.info("acquired s3 client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":

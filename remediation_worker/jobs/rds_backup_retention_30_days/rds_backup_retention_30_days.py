@@ -82,18 +82,20 @@ class RDSBackupRetention30Days(object):
                     ApplyImmediately=True,
                 )
             except ClientError as error:
-                if error.response["Error"]["Code"] == "InvalidParameterCombination":
-                    logging.info(
-                        "modifying instance failed, modifying backup retention period of cluster instead"
-                    )
-                    logcall(
-                        client.modify_db_cluster,
-                        DBClusterIdentifier=db_cluster_id,
-                        BackupRetentionPeriod=30,
-                        ApplyImmediately=True,
-                    )
-                else:
+                if (
+                    error.response["Error"]["Code"]
+                    != "InvalidParameterCombination"
+                ):
                     raise error
+                logging.info(
+                    "modifying instance failed, modifying backup retention period of cluster instead"
+                )
+                logcall(
+                    client.modify_db_cluster,
+                    DBClusterIdentifier=db_cluster_id,
+                    BackupRetentionPeriod=30,
+                    ApplyImmediately=True,
+                )
         else:
             logging.info(
                 "backup retention period already %d, not modifying", backup_period

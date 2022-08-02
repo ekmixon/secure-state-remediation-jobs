@@ -63,46 +63,43 @@ class S3RemovePublicAdminAcl:
         bucket_acl = client.get_bucket_acl(Bucket=bucket_name)
         new_grants = []
         for grant in bucket_acl["Grants"]:
-            if "URI" in grant["Grantee"]:
-                if grant["Grantee"][
-                    "URI"
-                ] == "http://acs.amazonaws.com/groups/global/AllUsers" and (
-                    grant["Permission"] == "FULL_CONTROL"
-                    or grant["Permission"] == "WRITE_ACP"
-                ):
-                    logging.info(
-                        "found public full_control grant - excluding it from the new list of grants"
-                    )
-                    if grant["Permission"] == "FULL_CONTROL":
-                        # we need to remove ONLY the write acp
-                        new_grants.append(
+            if (
+                "URI" in grant["Grantee"]
+                and grant["Grantee"]["URI"]
+                == "http://acs.amazonaws.com/groups/global/AllUsers"
+                and grant["Permission"] in ["FULL_CONTROL", "WRITE_ACP"]
+            ):
+                logging.info(
+                    "found public full_control grant - excluding it from the new list of grants"
+                )
+                if grant["Permission"] == "FULL_CONTROL":
+                    new_grants.extend(
+                        (
                             {
                                 "Grantee": {
                                     "Type": "Group",
                                     "URI": "http://acs.amazonaws.com/groups/global/AllUsers",
                                 },
                                 "Permission": "READ",
-                            }
-                        )
-                        new_grants.append(
+                            },
                             {
                                 "Grantee": {
                                     "Type": "Group",
                                     "URI": "http://acs.amazonaws.com/groups/global/AllUsers",
                                 },
                                 "Permission": "WRITE",
-                            }
-                        )
-                        new_grants.append(
+                            },
                             {
                                 "Grantee": {
                                     "Type": "Group",
                                     "URI": "http://acs.amazonaws.com/groups/global/AllUsers",
                                 },
                                 "Permission": "READ_ACP",
-                            }
+                            },
                         )
-                    continue
+                    )
+
+                continue
             new_grants.append(grant)
 
         acl_policy = {"Grants": new_grants, "Owner": bucket_acl["Owner"]}
@@ -121,8 +118,7 @@ class S3RemovePublicAdminAcl:
         client = boto3.client("s3")
         params = self.parse(args[1])
         logging.info("acquired s3 client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":

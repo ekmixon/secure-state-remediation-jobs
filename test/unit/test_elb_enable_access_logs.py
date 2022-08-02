@@ -22,10 +22,7 @@ def ordered(o):
     """deeply order o"""
     if isinstance(o, dict):
         return frozenset((k, ordered(v)) for k, v in o.items())
-    if isinstance(o, list):
-        return frozenset(ordered(x) for x in o)
-    else:
-        return o
+    return frozenset(ordered(x) for x in o) if isinstance(o, list) else o
 
 def policies_equal(a, b):
     return ordered(json.loads(a)) == ordered(json.loads(b))

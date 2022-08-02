@@ -94,8 +94,7 @@ class EnableKmsKeyRotation(object):
         params = self.parse(args[1])
         kms_client = boto3.client("kms", region_name=params["region"])
         logging.info("acquired kms client and parsed params - starting remediation")
-        rc = self.remediate(kms_client=kms_client, **params)
-        return rc
+        return self.remediate(kms_client=kms_client, **params)
 
 
 if __name__ == "__main__":

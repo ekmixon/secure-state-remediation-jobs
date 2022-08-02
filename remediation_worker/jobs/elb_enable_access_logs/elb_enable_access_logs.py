@@ -141,9 +141,9 @@ class ELBEnableAccessLogs(object):
         :raises: botocore.exceptions.ClientError
         """
 
-        logs_enabled = logcall(elb_client.describe_load_balancer_attributes, LoadBalancerName=elb_name)['LoadBalancerAttributes']['AccessLog']['Enabled']
-
-        if logs_enabled:
+        if logs_enabled := logcall(
+            elb_client.describe_load_balancer_attributes, LoadBalancerName=elb_name
+        )['LoadBalancerAttributes']['AccessLog']['Enabled']:
             logging.info('access logs already enabled')
         else:
             logging.info('enabling access logs')

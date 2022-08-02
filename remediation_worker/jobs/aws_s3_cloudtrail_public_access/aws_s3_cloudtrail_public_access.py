@@ -136,10 +136,9 @@ class CloudtrailS3RemovePublicAccess:
         logging.info(
             "acquired s3 client, cloudtrail_client and parsed params - starting remediation"
         )
-        rc = self.remediate(
+        return self.remediate(
             cloudtrail_client=cloudtrail_client, client=client, **params
         )
-        return rc
 
 
 if __name__ == "__main__":

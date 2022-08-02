@@ -31,11 +31,15 @@ class DisableAzureServicesAccess(object):
         subscription_id = object_chain_dict["cloudAccountId"]
 
         properties = object_chain_dict["properties"]
-        resource_group_name = ""
-        for property in properties:
-            if property["name"] == "ResourceGroup" and property["type"] == "string":
-                resource_group_name = property["stringV"]
-                break
+        resource_group_name = next(
+            (
+                property["stringV"]
+                for property in properties
+                if property["name"] == "ResourceGroup"
+                and property["type"] == "string"
+            ),
+            "",
+        )
 
         logging.info("parsed params")
         logging.info(f"  resource_group_name: {resource_group_name}")
@@ -68,7 +72,7 @@ class DisableAzureServicesAccess(object):
             logging.info("    executing client.firewall_rules.begin_delete")
             logging.info(f"      resource_group_name={resource_group_name}")
             logging.info(f"      server_name={postgre_server_name}")
-            logging.info(f"      firewall_rule_name=AllowAllWindowsAzureIps")
+            logging.info("      firewall_rule_name=AllowAllWindowsAzureIps")
 
             client.firewall_rules.begin_delete(
                 resource_group_name=resource_group_name,

@@ -43,11 +43,15 @@ class NetworkSecurityGroupClosePort3389(object):
         subscription_id = object_chain_dict["cloudAccountId"]
 
         properties = object_chain_dict["properties"]
-        resource_group_name = ""
-        for property in properties:
-            if property["name"] == "ResourceGroup" and property["type"] == "string":
-                resource_group_name = property["stringV"]
-                break
+        resource_group_name = next(
+            (
+                property["stringV"]
+                for property in properties
+                if property["name"] == "ResourceGroup"
+                and property["type"] == "string"
+            ),
+            "",
+        )
 
         logging.info("parsed params")
         logging.info(f"  resource_group_name: {resource_group_name}")
@@ -145,18 +149,14 @@ class NetworkSecurityGroupClosePort3389(object):
                         new_range_start = port + 1
                         new_range_end = int(boundaries[1])
                         if new_range_start != new_range_end:
-                            result.append(
-                                str(new_range_start) + "-" + str(new_range_end)
-                            )
+                            result.append(f"{str(new_range_start)}-{new_range_end}")
                         else:
                             result.append(str(new_range_start))
                     elif int(boundaries[1]) == port:
                         new_range_start = int(boundaries[0])
                         new_range_end = port - 1
                         if new_range_start != new_range_end:
-                            result.append(
-                                str(new_range_start) + "-" + str(new_range_end)
-                            )
+                            result.append(f"{new_range_start}-{str(new_range_end)}")
                         else:
                             result.append(str(new_range_start))
                     else:
@@ -166,12 +166,12 @@ class NetworkSecurityGroupClosePort3389(object):
                         range2_end = int(boundaries[1])
 
                         if range1_start != range1_end:
-                            result.append(str(range1_start) + "-" + str(range1_end))
+                            result.append(f"{range1_start}-{str(range1_end)}")
                         else:
                             result.append(str(range1_start))
 
                         if range2_start != range2_end:
-                            result.append(str(range2_start) + "-" + str(range2_end))
+                            result.append(f"{str(range2_start)}-{range2_end}")
                         else:
                             result.append(str(range2_start))
                 else:

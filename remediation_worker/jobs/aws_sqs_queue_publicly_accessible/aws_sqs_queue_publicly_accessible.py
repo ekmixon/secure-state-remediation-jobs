@@ -114,8 +114,7 @@ class SqsQueuePubliclyAccessible:
         params = self.parse(args[1])
         client = boto3.client("sqs", params["region"])
         logging.info("acquired sqs client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":

@@ -81,8 +81,7 @@ def generate_name(region, subscription_id, resource_group_name):
     region = random_str[-MAX_COUNT_REGION:]
     random_str = "".join(i for i in resource_group_name if i.islower() or i.isdigit())
     resource_group_name = random_str[-MAX_COUNT_RESOURCE_NAME:]
-    result_str = "chss" + subscription_id + resource_group_name + region + "logs"
-    return result_str
+    return f"chss{subscription_id}{resource_group_name}{region}logs"
 
 
 class SqlServerEncryptTdeProtector(object):
@@ -103,11 +102,15 @@ class SqlServerEncryptTdeProtector(object):
         object_chain_dict = json.loads(object_chain)
         subscription_id = object_chain_dict["cloudAccountId"]
         properties = object_chain_dict["properties"]
-        resource_group_name = ""
-        for property in properties:
-            if property["name"] == "ResourceGroup" and property["type"] == "string":
-                resource_group_name = property["stringV"]
-                break
+        resource_group_name = next(
+            (
+                property["stringV"]
+                for property in properties
+                if property["name"] == "ResourceGroup"
+                and property["type"] == "string"
+            ),
+            "",
+        )
 
         logging.info("parsed params")
         logging.info(f"  resource_group_name: {resource_group_name}")
@@ -355,12 +358,11 @@ class SqlServerEncryptTdeProtector(object):
         logging.info("executing keyvault_client.vaults.begin_create_or_update")
         logging.info(f"      resource_group_name={resource_group_name}")
         logging.info(f"      vault_name={key_vault_name}")
-        vault = keyvault_client.vaults.begin_create_or_update(
+        return keyvault_client.vaults.begin_create_or_update(
             resource_group_name=resource_group_name,
             vault_name=key_vault_name,
             parameters=key_vault_properties,
         ).result()
-        return vault
 
     def update_key_vault_access_policy(
         self,
@@ -432,8 +434,9 @@ class SqlServerEncryptTdeProtector(object):
         """
         d = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
         date = datetime.datetime.strptime(
-            d[0:19], "%Y-%m-%dT%H:%M:%S"
+            d[:19], "%Y-%m-%dT%H:%M:%S"
         ) + datetime.timedelta(days=180)
+
         expires_on = date_parse.parse(
             date.replace(microsecond=0, tzinfo=datetime.timezone.utc).isoformat()
         )
@@ -441,12 +444,11 @@ class SqlServerEncryptTdeProtector(object):
             vault_url=f"https://{key_vault_name}.vault.azure.net/",
             credential=credential,
         )
-        rsa_key_name = key_vault_name + "-" + suffix
+        rsa_key_name = f"{key_vault_name}-{suffix}"
         logging.info("creating a key")
-        rsa_key = key_client.create_rsa_key(
+        return key_client.create_rsa_key(
             rsa_key_name, size=2048, expires_on=expires_on, enabled=True
         )
-        return rsa_key
 
     def ensure_identity_assigned(
         self, client, resource_group_name, sql_server_name, region
@@ -677,9 +679,7 @@ class SqlServerEncryptTdeProtector(object):
             )
 
             # Create an SQL Server Key
-            server_key_name = (
-                key_vault_name + "_" + key.name + "_" + key.properties.version
-            )
+            server_key_name = f"{key_vault_name}_{key.name}_{key.properties.version}"
             client.server_keys.begin_create_or_update(
                 resource_group_name=resource_group_name,
                 server_name=sql_server_name,

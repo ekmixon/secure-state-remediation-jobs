@@ -185,13 +185,13 @@ class SetExpirationForKey(object):
             RoleAssignmentListResult
         ] = client_authorization.role_assignments.list_for_scope(scope=scope)
         role_assignment_list: List[dict] = list(role_assignment_paged)
-        for role in role_assignment_list:
-            if (
+        return any(
+            (
                 role.principal_id == app_object_id
                 and role.role_definition_id == role_definition_id
-            ):
-                return True
-        return False
+            )
+            for role in role_assignment_list
+        )
 
     def create_role_assignment(
         self,
@@ -353,8 +353,9 @@ class SetExpirationForKey(object):
                 .isoformat()
             )
             date = datetime.datetime.strptime(
-                d[0:19], "%Y-%m-%dT%H:%M:%S"
+                d[:19], "%Y-%m-%dT%H:%M:%S"
             ) + datetime.timedelta(days=730)
+
             expires_on = date_parse.parse(
                 date.replace(microsecond=0, tzinfo=datetime.timezone.utc).isoformat()
             )

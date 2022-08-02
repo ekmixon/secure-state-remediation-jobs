@@ -125,26 +125,26 @@ class S3EnableAccessLogging(object):
         if write_granted and read_acp_granted:
             return
 
-        write_grant = {
-            "Grantee": {
-                "URI": "http://acs.amazonaws.com/groups/s3/LogDelivery",
-                "Type": "Group",
-            },
-            "Permission": "WRITE",
-        }
-        read_acp_grant = {
-            "Grantee": {
-                "URI": "http://acs.amazonaws.com/groups/s3/LogDelivery",
-                "Type": "Group",
-            },
-            "Permission": "READ_ACP",
-        }
         del acl["ResponseMetadata"]
 
         modified_acl = copy.deepcopy(acl)
         if not write_granted:
+            write_grant = {
+                "Grantee": {
+                    "URI": "http://acs.amazonaws.com/groups/s3/LogDelivery",
+                    "Type": "Group",
+                },
+                "Permission": "WRITE",
+            }
             modified_acl["Grants"].append(write_grant)
         if not read_acp_granted:
+            read_acp_grant = {
+                "Grantee": {
+                    "URI": "http://acs.amazonaws.com/groups/s3/LogDelivery",
+                    "Type": "Group",
+                },
+                "Permission": "READ_ACP",
+            }
             modified_acl["Grants"].append(read_acp_grant)
         client.put_bucket_acl(Bucket=bucket_name, AccessControlPolicy=modified_acl)
 
@@ -258,8 +258,7 @@ class S3EnableAccessLogging(object):
         params = self.parse(args[1])
         client = boto3.client("s3")
         logging.info("acquired s3 client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":

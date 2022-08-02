@@ -142,7 +142,7 @@ class CloudtrailEncryptLogs(object):
         :raises: botocore.exceptions.ClientError
         """
         try:
-            
+
             #Get S3 Bucket name in which the Cloudtrail is storing logs
             logging.info("executing cloudtrail_client.get_trail")
             cloudtrail = cloudtrail_client.get_trail(Name=cloudtrail_name)
@@ -153,7 +153,7 @@ class CloudtrailEncryptLogs(object):
             bucket_location = s3_client.get_bucket_location(Bucket=bucket_name)
 
             #Create an AWS boto3 client instance for KMS key with the region same as the S3 bucket
-            if bucket_location['LocationConstraint'] == None:
+            if bucket_location['LocationConstraint'] is None:
                 kms_client = boto3.client('kms', region_name='us-east-1')
             else:
                 kms_client = boto3.client('kms', region_name=bucket_location['LocationConstraint'])
@@ -187,8 +187,9 @@ class CloudtrailEncryptLogs(object):
         s3_client = boto3.client("s3")
         cloudtrail_client = boto3.client("cloudtrail", region_name=params["region"])
         logging.info("acquired kms client, cloudtrail client and parsed params - starting remediation")
-        rc = self.remediate(s3_client=s3_client, cloudtrail_client=cloudtrail_client, **params)
-        return rc
+        return self.remediate(
+            s3_client=s3_client, cloudtrail_client=cloudtrail_client, **params
+        )
 
 
 if __name__ == "__main__":

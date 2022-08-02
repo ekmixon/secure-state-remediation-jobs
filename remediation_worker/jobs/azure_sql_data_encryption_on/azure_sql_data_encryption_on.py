@@ -35,11 +35,15 @@ class EnableSqlDataEncryption(object):
         subscription_id = object_chain_dict["cloudAccountId"]
 
         properties = object_chain_dict["properties"]
-        resource_group_name = ""
-        for property in properties:
-            if property["name"] == "ResourceGroup" and property["type"] == "string":
-                resource_group_name = property["stringV"]
-                break
+        resource_group_name = next(
+            (
+                property["stringV"]
+                for property in properties
+                if property["name"] == "ResourceGroup"
+                and property["type"] == "string"
+            ),
+            "",
+        )
 
         logging.info("parsed params")
         logging.info(f"  resource_group_name: {resource_group_name}")

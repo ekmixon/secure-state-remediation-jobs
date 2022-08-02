@@ -68,10 +68,7 @@ class RemoveAdministrationPortsPublicAccess(object):
         :returns: List of Rule Numbers.
         :rtype: list.
         """
-        rule_nos = []
-        for entry in network_acl_entries["Entries"]:
-            rule_nos.append(entry["RuleNumber"])
-        return rule_nos
+        return [entry["RuleNumber"] for entry in network_acl_entries["Entries"]]
 
     def create_list_of_port_range(self, network_acl_entries):
         """Creates List of Port Ranges in the Network Acl
@@ -84,9 +81,8 @@ class RemoveAdministrationPortsPublicAccess(object):
         for entry in network_acl_entries["Entries"]:
             if "PortRange" not in entry:
                 continue
-            else:
-                port = (entry["PortRange"]["From"], entry["PortRange"]["To"])
-                port_ranges.append(port)
+            port = (entry["PortRange"]["From"], entry["PortRange"]["To"])
+            port_ranges.append(port)
         return port_ranges
 
     def check_if_nacl_exists(
@@ -114,10 +110,7 @@ class RemoveAdministrationPortsPublicAccess(object):
                 return True
             else:
                 continue
-        for port in port_ranges:
-            if port[0] == port_from and port[1] == port_to:
-                return True
-        return False
+        return any(port[0] == port_from and port[1] == port_to for port in port_ranges)
 
     def find_and_remove_port(
         self,
@@ -239,22 +232,21 @@ class RemoveAdministrationPortsPublicAccess(object):
                         port_ranges,
                     ):
                         continue
-                    else:
-                        client.create_network_acl_entry(
-                            CidrBlock=entry["CidrBlock"],
-                            Egress=entry["Egress"],
-                            NetworkAclId=network_acl_id,
-                            PortRange={
-                                "From": portrange_from,
-                                "To": entry["PortRange"]["To"],
-                            },
-                            Protocol=entry["Protocol"],
-                            RuleAction=entry["RuleAction"],
-                            RuleNumber=rule_no,
-                        )
-                        rule_nos.append(rule_no)
-                        port = (portrange_from, entry["PortRange"]["To"])
-                        port_ranges.append(port)
+                    client.create_network_acl_entry(
+                        CidrBlock=entry["CidrBlock"],
+                        Egress=entry["Egress"],
+                        NetworkAclId=network_acl_id,
+                        PortRange={
+                            "From": portrange_from,
+                            "To": entry["PortRange"]["To"],
+                        },
+                        Protocol=entry["Protocol"],
+                        RuleAction=entry["RuleAction"],
+                        RuleNumber=rule_no,
+                    )
+                    rule_nos.append(rule_no)
+                    port = (portrange_from, entry["PortRange"]["To"])
+                    port_ranges.append(port)
 
     def remediate(self, region, client, network_acl_id, cloud_account_id):
         """Remove Network ACL Rules that allows public access to administration ports (3389 and 22)
@@ -308,8 +300,7 @@ class RemoveAdministrationPortsPublicAccess(object):
         params = self.parse(args[1])
         client = boto3.client("ec2", params["region"])
         logging.info("acquired ec2 client and parsed params - starting remediation")
-        rc = self.remediate(client=client, **params)
-        return rc
+        return self.remediate(client=client, **params)
 
 
 if __name__ == "__main__":
